@@ -196,7 +196,7 @@ func (self *stateObject) SetState(db Database, key, value common.Hash) {
 
 func (self *stateObject) setState(key, value common.Hash) {
 	self.cachedStorage[key] = value
-	self.dirtyStorage[key] = value
+	self.dirtyStorage[key] = value		//将修改的key和value存到dirtyStorage中
 
 }
 

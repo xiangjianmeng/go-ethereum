@@ -172,10 +172,12 @@ func main() {
 // Compiling
 
 func doInstall(cmdline []string) {
+	/* 设置flag.CommandLine.Parse的规则 */
 	var (
 		arch = flag.String("arch", "", "Architecture to cross build for")
 		cc   = flag.String("cc", "", "C compiler to cross build with")
 	)
+	/* 分析cmdline是否有-arch= -cc= 如果没有则在flag.Args()中返回  */
 	flag.CommandLine.Parse(cmdline)
 	env := build.Env()
 

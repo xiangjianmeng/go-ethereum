@@ -51,7 +51,7 @@ The state transitioning model does all all the necessary work to work out a vali
 type StateTransition struct {
 	gp         *GasPool
 	msg        Message
-	gas        uint64
+	gas        uint64		//记录着可用的gas
 	gasPrice   *big.Int
 	initialGas uint64
 	value      *big.Int
