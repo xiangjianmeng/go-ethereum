@@ -82,22 +82,27 @@ func Env() Environment {
 // LocalEnv returns build environment metadata gathered from git.
 func LocalEnv() Environment {
 	env := applyEnvFlags(Environment{Name: "local", Repo: "ethereum/go-ethereum"})
-
+	//执行该文件的路径就是go-ethereum路径，读取该路径下的.git/HEAD文件，从中获取相关信息
 	head := readGitFile("HEAD")
 	if splits := strings.Split(head, " "); len(splits) == 2 {
+		//splits[1]为refs/heads/codenote1.8.4
 		head = splits[1]
 	} else {
 		return env
 	}
 	if env.Commit == "" {
+		//读取.git/refs/heads/codenote1.8.4文件内容
 		env.Commit = readGitFile(head)
 	}
+	//获取分支名字
 	if env.Branch == "" {
 		if head != "HEAD" {
 			env.Branch = strings.TrimPrefix(head, "refs/heads/")
 		}
 	}
+	//获取tag名称
 	if info, err := os.Stat(".git/objects"); err == nil && info.IsDir() && env.Tag == "" {
+		//git tag -l是列出所有的tag，--points-at hash是显示commit为hash对应的tag，HEAD即当前分支
 		env.Tag = firstLine(RunGit("tag", "-l", "--points-at", "HEAD"))
 	}
 	return env

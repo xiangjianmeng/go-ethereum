@@ -95,6 +95,7 @@ func readGitFile(file string) string {
 	if err != nil {
 		return ""
 	}
+	//去除string(content)首尾连续的的空白字符
 	return strings.TrimSpace(string(content))
 }
 

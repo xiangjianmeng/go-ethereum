@@ -10,7 +10,7 @@
 
 GOBIN = $(shell pwd)/build/bin
 GO ?= latest
-
+# build/env.sh 后面的go run build/ci.go install ./cmd/geth是env.sh的参数。而install ./cmd/geth又是go run build/ci.go的参数。
 geth:
 	build/env.sh go run build/ci.go install ./cmd/geth
 	@echo "Done building."

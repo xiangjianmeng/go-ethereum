@@ -135,6 +135,7 @@ func executablePath(name string) string {
 }
 
 func main() {
+	//设置log的抬头包含文件名
 	log.SetFlags(log.Lshortfile)
 
 	if _, err := os.Stat(filepath.Join("build", "ci.go")); os.IsNotExist(err) {
@@ -143,6 +144,7 @@ func main() {
 	if len(os.Args) < 2 {
 		log.Fatal("need subcommand as first argument")
 	}
+	//Makefile中传递就是install ./cmd/geth其中install是os.Args[1]，./cmd/geth是os.Args[2:]
 	switch os.Args[1] {
 	case "install":
 		doInstall(os.Args[2:])
@@ -177,15 +179,18 @@ func doInstall(cmdline []string) {
 		arch = flag.String("arch", "", "Architecture to cross build for")
 		cc   = flag.String("cc", "", "C compiler to cross build with")
 	)
-	/* 分析cmdline是否有-arch= -cc= 如果没有则在flag.Args()中返回  */
+	/* 按照上面设定规则分析cmdline，是否有-arch= -cc= 如果有则将其指定的值存在flag.CommandLine并在flag.Args()中返回  */
+	// 由于cmdline只有./cmd/geth所以flag.CommandLine只存./cmd/geth
 	flag.CommandLine.Parse(cmdline)
 	env := build.Env()
 
 	// Check Go version. People regularly open issues about compilation
 	// failure with outdated Go. This should save them the trouble.
+	//检查go的版本是否满足要求
 	if !strings.Contains(runtime.Version(), "devel") {
 		// Figure out the minor version number since we can't textually compare (1.10 < 1.9)
 		var minor int
+		//获取go的次版本号
 		fmt.Sscanf(strings.TrimPrefix(runtime.Version(), "go1."), "%d", &minor)
 
 		if minor < 9 {
@@ -196,8 +201,10 @@ func doInstall(cmdline []string) {
 		}
 	}
 	// Compile packages given as arguments, or everything if there are no arguments.
+	// 编译参数中指定的包，如果参数中没有指定任何包则全部编译
 	packages := []string{"./..."}
 	if flag.NArg() > 0 {
+		//packages = []string{"./cmd/geth"}
 		packages = flag.Args()
 	}
 	packages = build.ExpandPackagesNoVendor(packages)
@@ -206,6 +213,7 @@ func doInstall(cmdline []string) {
 		goinstall := goTool("install", buildFlags(env)...)
 		goinstall.Args = append(goinstall.Args, "-v")
 		goinstall.Args = append(goinstall.Args, packages...)
+		// 运行/usr/local/Cellar/go/bin/go install -ldflags -X main.gitCommit=b794bd59974b2b183fa5d01940e73464a6f99814 -s -v ./cmd/geth后返回
 		build.MustRun(goinstall)
 		return
 	}
@@ -274,6 +282,7 @@ func goToolArch(arch string, cc string, subcmd string, args ...string) *exec.Cmd
 	if cc != "" {
 		cmd.Env = append(cmd.Env, "CC="+cc)
 	}
+	//os.Environ()以"key=value"的形式返回环境变量
 	for _, e := range os.Environ() {
 		if strings.HasPrefix(e, "GOPATH=") || strings.HasPrefix(e, "GOBIN=") {
 			continue

@@ -9,6 +9,7 @@ fi
 
 # Create fake Go workspace if it doesn't exist yet.
 workspace="$PWD/build/_workspace"
+# "$PWD"是执行该脚本的路径
 root="$PWD"
 ethdir="$workspace/src/github.com/ethereum"
 if [ ! -L "$ethdir/go-ethereum" ]; then
@@ -27,4 +28,5 @@ cd "$ethdir/go-ethereum"
 PWD="$ethdir/go-ethereum"
 
 # Launch the arguments with the configured environment.
+# 该处执行的就是运行该脚本时传入的参数
 exec "$@"
