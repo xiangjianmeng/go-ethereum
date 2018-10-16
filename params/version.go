@@ -33,6 +33,7 @@ var Version = func() string {
 	if VersionMeta != "" {
 		v += "-" + VersionMeta
 	}
+	//返回的版本为1.8.4-stable
 	return v
 }()
 

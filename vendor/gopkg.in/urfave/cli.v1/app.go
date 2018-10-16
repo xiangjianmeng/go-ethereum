@@ -154,7 +154,7 @@ func (a *App) Setup() {
 	if !a.HideVersion {
 		a.appendFlag(VersionFlag)
 	}
-
+	//给app中的命令进行分类
 	a.categories = CommandCategories{}
 	for _, command := range a.Commands {
 		a.categories = a.categories.AddCommand(command.Category, command)

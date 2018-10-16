@@ -189,8 +189,9 @@ func init() {
 			return err
 		}
 		// Start system runtime metrics collection
+		// metrics.CollectProcessMetrics()：创建一个goroutine，每3秒监测一次系统的ram和disk状态
 		go metrics.CollectProcessMetrics(3 * time.Second)
-
+		// 配置gas limit值
 		utils.SetupNetwork(ctx)
 		return nil
 	}
