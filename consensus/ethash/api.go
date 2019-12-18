@@ -28,7 +28,7 @@ var errEthashStopped = errors.New("ethash stopped")
 
 // API exposes ethash related methods for the RPC interface.
 type API struct {
-	ethash *Ethash // Make sure the mode of ethash is normal.
+	ethash *Ethash
 }
 
 // GetWork returns a work package for external miner.
@@ -37,27 +37,26 @@ type API struct {
 //   result[0] - 32 bytes hex encoded current block header pow-hash
 //   result[1] - 32 bytes hex encoded seed hash used for DAG
 //   result[2] - 32 bytes hex encoded boundary condition ("target"), 2^256/difficulty
-func (api *API) GetWork() ([3]string, error) {
-	if api.ethash.config.PowMode != ModeNormal && api.ethash.config.PowMode != ModeTest {
-		return [3]string{}, errors.New("not supported")
+//   result[3] - hex encoded block number
+func (api *API) GetWork() ([4]string, error) {
+	if api.ethash.remote == nil {
+		return [4]string{}, errors.New("not supported")
 	}
 
 	var (
-		workCh = make(chan [3]string, 1)
+		workCh = make(chan [4]string, 1)
 		errc   = make(chan error, 1)
 	)
-
 	select {
-	case api.ethash.fetchWorkCh <- &sealWork{errc: errc, res: workCh}:
-	case <-api.ethash.exitCh:
-		return [3]string{}, errEthashStopped
+	case api.ethash.remote.fetchWorkCh <- &sealWork{errc: errc, res: workCh}:
+	case <-api.ethash.remote.exitCh:
+		return [4]string{}, errEthashStopped
 	}
-
 	select {
 	case work := <-workCh:
 		return work, nil
 	case err := <-errc:
-		return [3]string{}, err
+		return [4]string{}, err
 	}
 }
 
@@ -65,23 +64,21 @@ func (api *API) GetWork() ([3]string, error) {
 // It returns an indication if the work was accepted.
 // Note either an invalid solution, a stale work a non-existent work will return false.
 func (api *API) SubmitWork(nonce types.BlockNonce, hash, digest common.Hash) bool {
-	if api.ethash.config.PowMode != ModeNormal && api.ethash.config.PowMode != ModeTest {
+	if api.ethash.remote == nil {
 		return false
 	}
 
 	var errc = make(chan error, 1)
-
 	select {
-	case api.ethash.submitWorkCh <- &mineResult{
+	case api.ethash.remote.submitWorkCh <- &mineResult{
 		nonce:     nonce,
 		mixDigest: digest,
 		hash:      hash,
 		errc:      errc,
 	}:
-	case <-api.ethash.exitCh:
+	case <-api.ethash.remote.exitCh:
 		return false
 	}
-
 	err := <-errc
 	return err == nil
 }
@@ -93,21 +90,19 @@ func (api *API) SubmitWork(nonce types.BlockNonce, hash, digest common.Hash) boo
 // It accepts the miner hash rate and an identifier which must be unique
 // between nodes.
 func (api *API) SubmitHashRate(rate hexutil.Uint64, id common.Hash) bool {
-	if api.ethash.config.PowMode != ModeNormal && api.ethash.config.PowMode != ModeTest {
+	if api.ethash.remote == nil {
 		return false
 	}
 
 	var done = make(chan struct{}, 1)
-
 	select {
-	case api.ethash.submitRateCh <- &hashrate{done: done, rate: uint64(rate), id: id}:
-	case <-api.ethash.exitCh:
+	case api.ethash.remote.submitRateCh <- &hashrate{done: done, rate: uint64(rate), id: id}:
+	case <-api.ethash.remote.exitCh:
 		return false
 	}
 
 	// Block until hash rate submitted successfully.
 	<-done
-
 	return true
 }
 
